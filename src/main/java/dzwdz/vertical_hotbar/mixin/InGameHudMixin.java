@@ -35,13 +35,15 @@ public abstract class InGameHudMixin extends DrawableHelper {
 
     @Shadow @Final private MinecraftClient client;
 
-    @Shadow @Final private static Identifier WIDGETS_TEX;
+    @Shadow @Final private static Identifier WIDGETS_TEXTURE;
 
     @Inject(at = @At("HEAD"), cancellable = true,
             method = "Lnet/minecraft/client/gui/hud/InGameHud;renderHotbar(FLnet/minecraft/client/util/math/MatrixStack;)V")
     public void renderHotbar(float f, MatrixStack matrixStack, CallbackInfo callbackInfo) {
-        if (!config.enabled) return;
+        if (!config.enabled || !HOTBAR_UPDATER.isEntryEnabled()) return;
 
+        HOTBAR_UPDATER.pushMatrices(null);
+        
         PlayerEntity playerEntity = getCameraPlayer();
         if (playerEntity == null) return;
 
@@ -53,7 +55,7 @@ public abstract class InGameHudMixin extends DrawableHelper {
             drawTexture(matrixStack, pos.x - 1, pos.y - 1, 20, 0, 22, 182);
         }
 
-        client.getTextureManager().bindTexture(WIDGETS_TEX);
+        client.getTextureManager().bindTexture(WIDGETS_TEXTURE);
 
         for(int i = 0; i < 9; i++) {
             Vec2i pos = getSlotPos(i, scaledWidth, scaledHeight);
@@ -88,7 +90,9 @@ public abstract class InGameHudMixin extends DrawableHelper {
 
         RenderSystem.disableRescaleNormal();
         RenderSystem.disableBlend();
-
+        
+        HOTBAR_UPDATER.popMatrices(null);
+        
         callbackInfo.cancel();
     }
 
@@ -119,28 +123,43 @@ public abstract class InGameHudMixin extends DrawableHelper {
         if (riddenEntity != null) {
             int hp = (int)riddenEntity.getHealth();
             int maxHP = (int)riddenEntity.getMaxHealth();
+            MOUNT_HEALTH_UPDATER.pushMatrices(matrixStack);
             verticality$drawStatusBar(matrixStack, i++, 52, 88 + (hp <= maxHP*.75 ? 9 : 0), 9, hp, 0xFFFFFF);
+            MOUNT_HEALTH_UPDATER.popMatrices(matrixStack);
         }
 
         int playerHP = (int)playerEntity.getHealth();
         int playerMaxHP = (int)playerEntity.getMaxHealth();
+        HEALTH_UPDATER.pushMatrices(matrixStack);
         verticality$drawStatusBar(matrixStack, i++, 16, 52 + (playerHP <= playerMaxHP*.75 ? 9 : 0), 0, playerHP, 0xFFFFFF);
+        HEALTH_UPDATER.popMatrices(matrixStack);
 
         int absorption = (int)playerEntity.getAbsorptionAmount();
-        if (absorption > 0)
+        if (absorption > 0) {
+        	ABSORPTION_UPDATER.pushMatrices(matrixStack);
             verticality$drawStatusBar(matrixStack, i++, 16, 160, 0, absorption, 0xFFFF00);
+            ABSORPTION_UPDATER.popMatrices(matrixStack);
+        }
 
         int hunger = playerEntity.getHungerManager().getFoodLevel();
+        HUNGER_UPDATER.pushMatrices(matrixStack);
         verticality$drawStatusBar(matrixStack, i++, 16, 52 + (hunger <= 15 ? 9 : 0), 27, hunger, 0xFFFFFF);
+        HUNGER_UPDATER.popMatrices(matrixStack);
 
         int armor = playerEntity.getArmor();
-        if (armor > 0)
+        if (armor > 0) {
+        	ARMOR_UPDATER.pushMatrices(matrixStack);
             verticality$drawStatusBar(matrixStack, i++, 16, 34, 9, armor, 0xFFFFFF);
+            ARMOR_UPDATER.popMatrices(matrixStack);
+        }
 
         int air = (playerEntity.getAir()*20)/playerEntity.getMaxAir();
         if (air < 0) air = 0;
-        if (playerEntity.getAir() < playerEntity.getMaxAir())
+        if (playerEntity.getAir() < playerEntity.getMaxAir()) {
+        	AIR_UPDATER.pushMatrices(matrixStack);
             verticality$drawStatusBar(matrixStack, i++, 16, 16, 18, air, 0xFFFFFF);
+            AIR_UPDATER.popMatrices(matrixStack);
+        }
 
         callbackInfo.cancel();
     }
@@ -148,7 +167,9 @@ public abstract class InGameHudMixin extends DrawableHelper {
     @Inject(at = @At("HEAD"), cancellable = true,
             method = "Lnet/minecraft/client/gui/hud/InGameHud;renderExperienceBar(Lnet/minecraft/client/util/math/MatrixStack;I)V")
     public void renderExperienceBar(MatrixStack matrixStack, int _x, CallbackInfo callbackInfo) {
-        if (!config.enabled) return;
+        if (!config.enabled || !EXPERIENCE_BAR_UPDATER.isEntryEnabled()) return;
+        
+        EXPERIENCE_BAR_UPDATER.pushMatrices(matrixStack);
 
         client.getTextureManager().bindTexture(EntryPoint.BARS);
 
@@ -177,6 +198,9 @@ public abstract class InGameHudMixin extends DrawableHelper {
         }
 
         client.getTextureManager().bindTexture(GUI_ICONS_TEXTURE);
+        
+        EXPERIENCE_BAR_UPDATER.popMatrices(matrixStack);
+        
         callbackInfo.cancel();
     }
 
@@ -184,6 +208,8 @@ public abstract class InGameHudMixin extends DrawableHelper {
             method = "Lnet/minecraft/client/gui/hud/InGameHud;renderMountJumpBar(Lnet/minecraft/client/util/math/MatrixStack;I)V")
     public void renderMountJumpBar(MatrixStack matrixStack, int _x, CallbackInfo callbackInfo) {
         if (!config.enabled) return;
+        
+        JUMP_BAR_UPDATER.pushMatrices(matrixStack);
 
         client.getTextureManager().bindTexture(EntryPoint.BARS);
 
@@ -196,6 +222,8 @@ public abstract class InGameHudMixin extends DrawableHelper {
             else
                 drawTexture(matrixStack, pos.x, pos.y, 0, 0, 5, n);
         }
+        
+        JUMP_BAR_UPDATER.popMatrices(matrixStack);
 
         callbackInfo.cancel();
     }
@@ -208,7 +236,7 @@ public abstract class InGameHudMixin extends DrawableHelper {
         callbackInfo.cancel();
     }
 
-    @ModifyArg(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;drawWithShadow(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/text/StringRenderable;FFI)I"),
+    @ModifyArg(at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;drawWithShadow(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/text/Text;FFI)I"),
                method = "Lnet/minecraft/client/gui/hud/InGameHud;renderHeldItemTooltip(Lnet/minecraft/client/util/math/MatrixStack;)V", index = 3)
     public float centerItemTooltip(float y) {
         if (!config.enabled) return y;

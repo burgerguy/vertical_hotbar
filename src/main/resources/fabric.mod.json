@@ -20,6 +20,9 @@
     ],
     "modmenu": [
       "dzwdz.vertical_hotbar.client.ModMenuIntegration"
+    ],
+    "hudtweaks": [
+      "dzwdz.vertical_hotbar.client.hudtweaks.HudTweaksIntegration"
     ]
   },
   "mixins": [
@@ -28,7 +31,7 @@
   "depends": {
     "fabricloader": ">=0.9.2+build.206",
     "fabric": "*",
-    "minecraft": "1.16.1"
+    "minecraft": ">=1.16.1"
   },
   "custom": {
     "modupdater": {

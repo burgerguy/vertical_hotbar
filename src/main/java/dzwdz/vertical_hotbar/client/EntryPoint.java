@@ -1,8 +1,10 @@
 package dzwdz.vertical_hotbar.client;
 
+import com.github.burgerguy.hudtweaks.api.MatrixUpdater;
+
 import dzwdz.vertical_hotbar.Vec2i;
-import me.sargunvohra.mcmods.autoconfig1u.AutoConfig;
-import me.sargunvohra.mcmods.autoconfig1u.serializer.JanksonConfigSerializer;
+import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -11,6 +13,16 @@ import net.minecraft.util.Identifier;
 @Environment(EnvType.CLIENT)
 public class EntryPoint implements ClientModInitializer {
     public static final Identifier BARS = new Identifier("vertical_hotbar", "textures/gui/bars.png");
+
+    public static final MatrixUpdater HOTBAR_UPDATER = new MatrixUpdater();
+    public static final MatrixUpdater MOUNT_HEALTH_UPDATER = new MatrixUpdater();
+    public static final MatrixUpdater HEALTH_UPDATER = new MatrixUpdater();
+    public static final MatrixUpdater ABSORPTION_UPDATER = new MatrixUpdater();
+    public static final MatrixUpdater HUNGER_UPDATER = new MatrixUpdater();
+    public static final MatrixUpdater ARMOR_UPDATER = new MatrixUpdater();
+    public static final MatrixUpdater AIR_UPDATER = new MatrixUpdater();
+    public static final MatrixUpdater EXPERIENCE_BAR_UPDATER = new MatrixUpdater();
+    public static final MatrixUpdater JUMP_BAR_UPDATER = new MatrixUpdater();
 
     public static ModConfig config;
 
